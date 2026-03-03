@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Badge Builder by Novigem
+
+Design custom achievement badges · pick a shape, colour, and icon · download as PNG or SVG · free, no sign-up required.
+
+**[badges.novigem.com](https://badges.novigem.com)**
+
+## Features
+
+- **3 shapes** · hexagon, circle, shield
+- **5 colour tiers** · bronze, silver, gold, ruby, emerald
+- **108 icons** · curated from Lucide
+- **Transparent PNG & SVG export** · at 2x resolution
+- **Shareable URLs** · badge config encoded in URL params
+- **Social sharing** · X, LinkedIn, copy link, native Web Share API
+- **100% client-side** · no data stored, no tracking
+
+## Tech Stack
+
+- Next.js 16 · App Router · React 19 · TypeScript
+- Tailwind CSS v4 · shadcn/ui
+- Framer Motion
+- Lucide React icons
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Deploy to Vercel:
 
-## Learn More
+```bash
+vercel
+```
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
