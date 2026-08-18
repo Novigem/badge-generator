@@ -58,7 +58,8 @@ export const TIER_LABELS: Record<BadgeTier, string> = {
 
 /**
  * Preset swatches shown in the builder: the five hand-tuned tiers
- * plus derived colors covering the rest of the wheel.
+ * plus four derived colors. Any other color remains reachable through
+ * the free picker and stays valid when arriving via a shared URL.
  */
 export const COLOR_PRESETS: {
   key: string;
@@ -75,11 +76,8 @@ export const COLOR_PRESETS: {
     color: { kind: "tier", tier: "emerald" },
   },
   { key: "blue", label: "Blue", color: { kind: "custom", hex: "#2563eb" } },
-  { key: "purple", label: "Purple", color: { kind: "custom", hex: "#a855f7" } },
   { key: "teal", label: "Teal", color: { kind: "custom", hex: "#14b8a6" } },
   { key: "orange", label: "Orange", color: { kind: "custom", hex: "#f97316" } },
-  { key: "pink", label: "Pink", color: { kind: "custom", hex: "#ec4899" } },
-  { key: "slate", label: "Slate", color: { kind: "custom", hex: "#64748b" } },
   { key: "black", label: "Black", color: { kind: "custom", hex: "#262626" } },
 ];
 
@@ -264,6 +262,21 @@ export function toDuotone(palette: BadgeColorPalette): BadgeDuotone {
     accent: palette.mid,
     cream: CREAM,
   };
+}
+
+/**
+ * Darkens a hex color by the given amount (0..1), used for the
+ * rosette's ribbon folds, which read as the shaded back of the band.
+ */
+export function darkenHex(hex: string, amount: number): string {
+  const normalized = hex.replace("#", "");
+  const channel = (offset: number) => {
+    const value = parseInt(normalized.slice(offset, offset + 2), 16);
+    return Math.round(value * (1 - amount))
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${channel(0)}${channel(2)}${channel(4)}`.toUpperCase();
 }
 
 /**

@@ -10,7 +10,7 @@ import { ICON_MAP } from "@/lib/icon-data";
 const SITE_URL = "https://badges.novigem.com";
 
 const VALID_TIERS: BadgeTier[] = ["bronze", "silver", "gold", "ruby", "emerald"];
-const VALID_SHAPES: BadgeShape[] = ["circle", "arch"];
+const VALID_SHAPES: BadgeShape[] = ["circle", "arch", "star", "rosette"];
 /** Retired shapes from old shared URLs map to the closest current shape. */
 const LEGACY_SHAPE_MAP: Record<string, BadgeShape> = {
   hexagon: "circle",

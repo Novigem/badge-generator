@@ -3,8 +3,13 @@
 import React, { forwardRef, useId } from "react";
 import type { BadgeConfig, BadgeDuotone } from "@/lib/types";
 import { MAX_TOP_TEXT, MAX_BOTTOM_TEXT } from "@/lib/types";
-import { resolveDuotone, HALO, STICKER_SHADOW } from "@/lib/badge-colors";
-import { CIRCLE, ARCH } from "@/lib/badge-shapes";
+import {
+  resolveDuotone,
+  darkenHex,
+  HALO,
+  STICKER_SHADOW,
+} from "@/lib/badge-colors";
+import { CIRCLE, ARCH, STAR, ROSETTE } from "@/lib/badge-shapes";
 import { ICON_MAP } from "@/lib/icon-data";
 import { ICON_BBOXES } from "@/lib/icon-bboxes";
 import { sanitizeForSVG } from "@/lib/sanitize";
@@ -24,6 +29,8 @@ const ARC_LENGTH = {
   circleTop: Math.PI * 64,
   circleBottom: Math.PI * 75,
   archTop: Math.PI * 50,
+  starTop: Math.PI * 45.5,
+  rosetteTop: Math.PI * 52,
 };
 
 /**
@@ -32,7 +39,9 @@ const ARC_LENGTH = {
  */
 function fitFontSize(text: string, base: number, trackLength: number): number {
   if (!text) return base;
-  const usable = trackLength * 0.94;
+  // Real glyphs run a little wider than the average-ratio estimate, so
+  // the usable factor keeps a safety margin against textPath overflow.
+  const usable = trackLength * 0.86;
   const fit = (usable / text.length - LETTER_SPACING) / GLYPH_WIDTH_RATIO;
   return Math.round(Math.min(base, Math.max(7, fit)) * 10) / 10;
 }
@@ -69,6 +78,22 @@ const CIRCLE_ICON_FIT: IconFit = {
   box: 52,
   target: 52.9,
   clear: 29,
+};
+
+const STAR_ICON_FIT: IconFit = {
+  cx: 100,
+  cy: 100,
+  box: 45,
+  target: 46,
+  clear: 25.2,
+};
+
+const ROSETTE_ICON_FIT: IconFit = {
+  cx: 100,
+  cy: 86,
+  box: 42,
+  target: 43.1,
+  clear: 23.6,
 };
 
 /**
@@ -158,6 +183,9 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
       .trim();
 
     const isCircle = config.shape === "circle";
+    const isArch = config.shape === "arch";
+    const isStar = config.shape === "star";
+    const isRosette = config.shape === "rosette";
 
     return (
       <svg
@@ -173,14 +201,15 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
         <title>{config.topText || "Badge"}</title>
 
         <defs>
-          {isCircle ? (
+          {isCircle && (
             <>
               <path id={`${uid}-arc-top`} d={CIRCLE.arcTop} />
               <path id={`${uid}-arc-bottom`} d={CIRCLE.arcBottom} />
             </>
-          ) : (
-            <path id={`${uid}-arc-top`} d={ARCH.arcTop} />
           )}
+          {isArch && <path id={`${uid}-arc-top`} d={ARCH.arcTop} />}
+          {isStar && <path id={`${uid}-arc-top`} d={STAR.arcTop} />}
+          {isRosette && <path id={`${uid}-arc-top`} d={ROSETTE.arcTop} />}
           <filter id={`${uid}-ds`} x="-12%" y="-12%" width="124%" height="128%">
             <feDropShadow
               dx="0"
@@ -192,7 +221,7 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
           </filter>
         </defs>
 
-        {isCircle ? (
+        {isCircle && (
           <g>
             {/* Pale die-cut halo with the single subtle drop shadow */}
             <circle
@@ -275,7 +304,9 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
               />
             ))}
           </g>
-        ) : (
+        )}
+
+        {isArch && (
           <g>
             {/* Pale die-cut halo with the single subtle drop shadow */}
             <path d={ARCH.haloPath} fill={HALO} filter={`url(#${uid}-ds)`} />
@@ -336,6 +367,201 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
               >
                 {bottomText}
               </text>
+            )}
+          </g>
+        )}
+
+        {isStar && (
+          <g>
+            {/* Pale die-cut halo with the single subtle drop shadow */}
+            <path d={STAR.haloPath} fill={HALO} filter={`url(#${uid}-ds)`} />
+            {/* Accent body with thick ink outline and rounded points */}
+            <path
+              d={STAR.bodyPath}
+              fill={duotone.accent}
+              stroke={duotone.ink}
+              strokeWidth={5}
+              strokeLinejoin="round"
+            />
+            {/* Cream disc holding the icon */}
+            <circle
+              cx={100}
+              cy={100}
+              r={STAR.discRadius}
+              fill={duotone.cream}
+              stroke={duotone.ink}
+              strokeWidth={2.5}
+            />
+            {IconComponent && (
+              <StickerIcon
+                icon={IconComponent}
+                iconKey={config.iconName}
+                fit={STAR_ICON_FIT}
+                duotone={duotone}
+              />
+            )}
+            {topText && (
+              <text
+                fontSize={fitFontSize(topText, 10.5, ARC_LENGTH.starTop)}
+                fontWeight={700}
+                letterSpacing={LETTER_SPACING}
+                fill={duotone.ink}
+              >
+                <textPath
+                  href={`#${uid}-arc-top`}
+                  startOffset="50%"
+                  textAnchor="middle"
+                >
+                  {topText}
+                </textPath>
+              </text>
+            )}
+            {bottomText && (
+              <text
+                x={100}
+                y={STAR.captionY}
+                fontSize={fitFontSize(bottomText, 8, 64)}
+                fontWeight={700}
+                letterSpacing={2}
+                fill={duotone.ink}
+                textAnchor="middle"
+                // The lower star region is narrow and fitFontSize floors at
+                // 7, so long captions are compressed to the track instead
+                // of spilling over the star's edges.
+                textLength={
+                  bottomText.length *
+                    (GLYPH_WIDTH_RATIO * fitFontSize(bottomText, 8, 64) + 2) >
+                  62
+                    ? 62
+                    : undefined
+                }
+                lengthAdjust="spacingAndGlyphs"
+              >
+                {bottomText}
+              </text>
+            )}
+          </g>
+        )}
+
+        {isRosette && (
+          <g>
+            {/* Halo follows the combined circle-plus-ribbon silhouette */}
+            <g filter={`url(#${uid}-ds)`}>
+              <circle
+                cx={ROSETTE.cx}
+                cy={ROSETTE.cy}
+                r={ROSETTE.haloRadius}
+                fill={HALO}
+              />
+              {bottomText &&
+                ROSETTE.ribbon.haloPaths.map((d) => (
+                  <path key={d} d={d} fill={HALO} />
+                ))}
+            </g>
+            {/* Notched ribbon wings tucked behind the circle */}
+            {bottomText && (
+              <>
+                {ROSETTE.ribbon.wingPaths.map((d) => (
+                  <path
+                    key={d}
+                    d={d}
+                    fill={duotone.accent}
+                    stroke={duotone.ink}
+                    strokeWidth={3}
+                    strokeLinejoin="round"
+                  />
+                ))}
+                {ROSETTE.ribbon.foldPaths.map((d) => (
+                  <path key={d} d={d} fill={darkenHex(duotone.ink, 0.35)} />
+                ))}
+              </>
+            )}
+            {/* Ink body */}
+            <circle
+              cx={ROSETTE.cx}
+              cy={ROSETTE.cy}
+              r={ROSETTE.bodyRadius}
+              fill={duotone.ink}
+            />
+            {/* Cream pinstripe inside the rim */}
+            <circle
+              cx={ROSETTE.cx}
+              cy={ROSETTE.cy}
+              r={ROSETTE.pinstripeRadius}
+              fill="none"
+              stroke={duotone.cream}
+              strokeWidth={1.5}
+              opacity={0.55}
+            />
+            {/* Accent ring around the inner disc */}
+            <circle
+              cx={ROSETTE.cx}
+              cy={ROSETTE.cy}
+              r={ROSETTE.ringRadius}
+              fill="none"
+              stroke={duotone.accent}
+              strokeWidth={2.5}
+            />
+            {/* Cream inner disc */}
+            <circle
+              cx={ROSETTE.cx}
+              cy={ROSETTE.cy}
+              r={ROSETTE.discRadius}
+              fill={duotone.cream}
+            />
+            {IconComponent && (
+              <StickerIcon
+                icon={IconComponent}
+                iconKey={config.iconName}
+                fit={ROSETTE_ICON_FIT}
+                duotone={duotone}
+              />
+            )}
+            {topText && (
+              <text
+                fontSize={fitFontSize(topText, 11.5, ARC_LENGTH.rosetteTop)}
+                fontWeight={700}
+                letterSpacing={LETTER_SPACING}
+                fill={duotone.cream}
+              >
+                <textPath
+                  href={`#${uid}-arc-top`}
+                  startOffset="50%"
+                  textAnchor="middle"
+                >
+                  {topText}
+                </textPath>
+              </text>
+            )}
+            {ROSETTE.dots.map((dot) => (
+              <circle
+                key={`${dot.cx}-${dot.cy}`}
+                cx={dot.cx}
+                cy={dot.cy}
+                r={2.6}
+                fill={duotone.accent}
+              />
+            ))}
+            {/* Sagging front band carrying the bottom text */}
+            {bottomText && (
+              <>
+                <path d={ROSETTE.ribbon.bandPath} fill={duotone.ink} />
+                <text
+                  x={100}
+                  y={ROSETTE.ribbon.textY}
+                  fontSize={fitFontSize(
+                    bottomText,
+                    9,
+                    ROSETTE.ribbon.textTrack,
+                  )}
+                  fontWeight={700}
+                  letterSpacing={2}
+                  fill={duotone.cream}
+                  textAnchor="middle"
+                >
+                  {bottomText}
+                </text>
+              </>
             )}
           </g>
         )}
