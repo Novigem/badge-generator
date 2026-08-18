@@ -1,6 +1,6 @@
 # Badge Builder by Novigem
 
-A free, client-side tool for designing custom achievement badges. Pick a shape, colour, and icon, then download as transparent PNG or SVG.
+A free, client-side tool for designing custom achievement badges in a flat curved-text sticker style. Add your text, pick a shape, colour, and icon, then download as transparent PNG or SVG.
 
 **[badges.novigem.com](https://badges.novigem.com)**
 
@@ -8,8 +8,9 @@ A free, client-side tool for designing custom achievement badges. Pick a shape, 
 
 ## Features
 
-- **3 badge shapes** · hexagon, circle, shield
-- **Any colour** · 12 presets (bronze, silver, gold, ruby, emerald, blue, purple, teal, orange, pink, slate, black) plus a free colour picker; the full metallic palette is derived from any base colour
+- **2 badge shapes** · circle and arch, drawn as flat die-cut stickers with curved text
+- **Two text lines** · uppercase top text on the arc plus an optional bottom line (curved on the circle, a small caps line on the arch)
+- **Any colour** · 12 presets (bronze, silver, gold, ruby, emerald, blue, purple, teal, orange, pink, slate, black) plus a free colour picker; each base colour maps to a duotone of ink, accent, and cream
 - **108 curated icons** · sourced from Lucide
 - **High-res export** · transparent PNG at 2x resolution and SVG
 - **Shareable URLs** · badge configuration encoded in URL params so you can share a direct link to your design
@@ -58,8 +59,8 @@ app/
 
 components/
   badge-builder/            # Core builder components
-    badge-svg.tsx            # Layered SVG renderer with gradients and shadows
-    badge-controls.tsx       # Shape, colour, icon, and name controls
+    badge-svg.tsx            # Flat sticker SVG renderer with curved textPath arcs
+    badge-controls.tsx       # Text, shape, colour, and icon controls
     badge-builder.tsx        # Main container with URL state sync
     download-button.tsx      # PNG and SVG export
     share-buttons.tsx        # Social sharing (X, LinkedIn, copy, native)
@@ -72,8 +73,8 @@ components/
 
 lib/
   types.ts                  # BadgeConfig, BadgeColor, BadgeShape types
-  badge-colors.ts           # Hand-tuned tier palettes and palette derivation
-  badge-shapes.ts           # SVG paths for each shape
+  badge-colors.ts           # Tier palettes, palette derivation, and duotone mapping
+  badge-shapes.ts           # Sticker geometry: circle rings and arch paths, text arcs
   icon-data.ts              # Icon registry with search tags
   export.ts                 # SVG/PNG download utilities
   url-state.ts              # URL param serialisation and validation
