@@ -33,8 +33,11 @@ export const ARCH = {
   /** Thin accent pinline inset from the body. */
   pinlinePath:
     "M 38 90 A 62 62 0 0 1 162 90 L 162 160 Q 162 172 152 172 L 48 172 Q 38 172 38 160 Z",
-  /** Arch text baseline: r50, concentric with the r70 crown. */
-  arcTop: "M 50,90 A 50 50 0 0 1 150,90",
+  /**
+   * Arch text baseline: r47, concentric with the r70 crown and pulled
+   * in from the r62 pinline so the glyph tops keep clear air under it.
+   */
+  arcTop: "M 53,90 A 47 47 0 0 1 147,90",
   /** Radiating ink dash marks above the icon. */
   rays: [
     { x1: 100, y1: 82, x2: 100, y2: 72 },
@@ -95,10 +98,12 @@ function roundedStarPath(
 export const STAR = {
   /** Pale die-cut halo behind the sticker. */
   haloPath: roundedStarPath(100, 100, 99, 63, 10, 8),
-  /** Accent body with a thick ink outline. */
+  /** Cream body with a thick ink outline. */
   bodyPath: roundedStarPath(100, 100, 91, 58, 8, 6),
-  /** Cream disc holding the icon. */
-  discRadius: 40,
+  /** Inset accent keyline following the silhouette, like the arch's. */
+  pinlinePath: roundedStarPath(100, 100, 84, 53.5, 7, 5.5),
+  /** Thin accent ring framing the icon in place of a solid disc. */
+  ringRadius: 40,
   /**
    * Top text baseline: r45.5 arc around the disc. Glyphs grow outward
    * and stay under r57, inside the rounded valleys at r58.

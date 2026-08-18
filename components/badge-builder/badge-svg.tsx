@@ -28,7 +28,7 @@ const GLYPH_WIDTH_RATIO = 0.62;
 const ARC_LENGTH = {
   circleTop: Math.PI * 64,
   circleBottom: Math.PI * 75,
-  archTop: Math.PI * 50,
+  archTop: Math.PI * 47,
   starTop: Math.PI * 45.5,
   rosetteTop: Math.PI * 50,
 };
@@ -341,7 +341,7 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
             )}
             {topText && (
               <text
-                fontSize={fitFontSize(topText, 12, ARC_LENGTH.archTop)}
+                fontSize={fitFontSize(topText, 11.5, ARC_LENGTH.archTop)}
                 fontWeight={700}
                 letterSpacing={LETTER_SPACING}
                 fill={duotone.ink}
@@ -375,22 +375,29 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
           <g>
             {/* Pale die-cut halo with the single subtle drop shadow */}
             <path d={STAR.haloPath} fill={HALO} filter={`url(#${uid}-ds)`} />
-            {/* Accent body with thick ink outline and rounded points */}
+            {/* Cream body with thick ink outline and rounded points */}
             <path
               d={STAR.bodyPath}
-              fill={duotone.accent}
+              fill={duotone.cream}
               stroke={duotone.ink}
               strokeWidth={5}
               strokeLinejoin="round"
             />
-            {/* Cream disc holding the icon */}
+            {/* Accent keyline inset from the silhouette */}
+            <path
+              d={STAR.pinlinePath}
+              fill="none"
+              stroke={duotone.accent}
+              strokeWidth={2}
+            />
+            {/* Thin accent ring framing the icon */}
             <circle
               cx={100}
               cy={100}
-              r={STAR.discRadius}
-              fill={duotone.cream}
-              stroke={duotone.ink}
-              strokeWidth={2.5}
+              r={STAR.ringRadius}
+              fill="none"
+              stroke={duotone.accent}
+              strokeWidth={2}
             />
             {IconComponent && (
               <StickerIcon
