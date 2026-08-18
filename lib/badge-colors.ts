@@ -1,4 +1,9 @@
-import type { BadgeTier, BadgeColor, BadgeColorPalette } from "./types";
+import type {
+  BadgeTier,
+  BadgeColor,
+  BadgeColorPalette,
+  BadgeDuotone,
+} from "./types";
 
 export const BADGE_COLORS: Record<BadgeTier, BadgeColorPalette> = {
   bronze: {
@@ -221,4 +226,49 @@ export function isSameColor(a: BadgeColor, b: BadgeColor): boolean {
     return a.hex.toLowerCase() === b.hex.toLowerCase();
   }
   return false;
+}
+
+/** Fixed warm paper tone used across every sticker colorway. */
+export const CREAM = "#F2EDD8";
+
+/** Pale die-cut halo behind every sticker. */
+export const HALO = "#FBF8EE";
+
+/** Shadow color for the sticker drop shadow (used at low opacity). */
+export const STICKER_SHADOW = "#4A4438";
+
+const RGBA_PATTERN = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/;
+
+/**
+ * Returns the opaque hex version of a palette shadow value.
+ * Palette shadows follow the recipe hue unchanged, s x 1.15 capped
+ * at 1, l = clamp(l x 0.6, 0.1, 0.35); dropping the alpha yields a
+ * dark, saturated ink in the same hue family.
+ */
+function opaqueShadowHex(shadow: string): string {
+  if (shadow.startsWith("#")) return shadow.toUpperCase();
+  const match = RGBA_PATTERN.exec(shadow);
+  if (!match) return "#2F2A20";
+  const toHex = (v: string) => Number(v).toString(16).padStart(2, "0");
+  return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`.toUpperCase();
+}
+
+/**
+ * Maps a full six-value palette to the flat sticker duotone:
+ * accent is the base color (mid), ink is the opaque version of the
+ * palette shadow recipe, cream is fixed.
+ */
+export function toDuotone(palette: BadgeColorPalette): BadgeDuotone {
+  return {
+    ink: opaqueShadowHex(palette.shadow),
+    accent: palette.mid,
+    cream: CREAM,
+  };
+}
+
+/**
+ * Resolves a BadgeColor straight to its sticker duotone.
+ */
+export function resolveDuotone(color: BadgeColor): BadgeDuotone {
+  return toDuotone(resolvePalette(color));
 }

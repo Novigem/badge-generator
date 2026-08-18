@@ -3,12 +3,13 @@
 import { useReducer, useRef, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import type { BadgeConfig } from "@/lib/types";
+import { MAX_TOP_TEXT, MAX_BOTTOM_TEXT } from "@/lib/types";
 import { BadgeSVG } from "./badge-svg";
 import { BadgeControls } from "./badge-controls";
 import { DownloadButton } from "./download-button";
 import { ShareButtons } from "./share-buttons";
 import { ICON_MAP } from "@/lib/icon-data";
-import { resolvePalette } from "@/lib/badge-colors";
+import { resolveDuotone } from "@/lib/badge-colors";
 import {
   parseConfigFromParams,
   buildShareUrl,
@@ -16,17 +17,22 @@ import {
 } from "@/lib/url-state";
 
 const defaultConfig: BadgeConfig = {
-  name: "Achievement",
+  topText: "Achievement",
+  bottomText: "",
   iconName: "star",
   color: { kind: "tier", tier: "gold" },
-  shape: "hexagon",
+  shape: "circle",
 };
 
 function configReducer(
   state: BadgeConfig,
   action: Partial<BadgeConfig>,
 ): BadgeConfig {
-  return { ...state, ...action };
+  const next = { ...state, ...action };
+  // Clamp so text can never overflow the arcs, wherever it came from.
+  next.topText = next.topText.slice(0, MAX_TOP_TEXT);
+  next.bottomText = next.bottomText.slice(0, MAX_BOTTOM_TEXT);
+  return next;
 }
 
 function BadgeBuilderInner() {
@@ -83,7 +89,7 @@ function BadgeBuilderInner() {
                 <div
                   className="absolute inset-0 blur-3xl opacity-20 rounded-full"
                   style={{
-                    background: `radial-gradient(circle, ${resolvePalette(config.color).mid}, transparent)`,
+                    background: `radial-gradient(circle, ${resolveDuotone(config.color).accent}, transparent)`,
                   }}
                 />
                 <BadgeSVG ref={svgRef} config={config} size={280} />
@@ -91,7 +97,7 @@ function BadgeBuilderInner() {
 
               <div className="text-center space-y-1 mb-6">
                 <h3 className="heading-md">
-                  {config.name || "Untitled Badge"}
+                  {config.topText || "Untitled Badge"}
                 </h3>
                 {iconEntry && (
                   <p className="body-sm text-muted-foreground">
@@ -103,7 +109,7 @@ function BadgeBuilderInner() {
               <div className="w-full max-w-xs">
                 <DownloadButton
                   svgRef={svgRef}
-                  filename={config.name || "badge"}
+                  filename={config.topText || "badge"}
                 />
               </div>
 

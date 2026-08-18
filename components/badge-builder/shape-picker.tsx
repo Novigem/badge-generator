@@ -9,24 +9,17 @@ interface ShapePickerProps {
   onSelect: (shape: BadgeShape) => void;
 }
 
-const shapes: BadgeShape[] = ["hexagon", "circle", "shield"];
+const shapes: BadgeShape[] = ["circle", "arch"];
 
 function ShapePreview({ shape }: { shape: BadgeShape }) {
   return (
     <svg viewBox="0 0 40 40" className="w-10 h-10" aria-hidden="true">
-      {shape === "hexagon" && (
-        <path
-          d="M20,2 L37,11 L37,29 L20,38 L3,29 L3,11 Z"
-          fill="currentColor"
-          opacity={0.7}
-        />
-      )}
       {shape === "circle" && (
         <circle cx="20" cy="20" r="16" fill="currentColor" opacity={0.7} />
       )}
-      {shape === "shield" && (
+      {shape === "arch" && (
         <path
-          d="M7,10 Q13,4 20,4 Q27,4 33,10 L33,24 Q33,35 20,39 Q7,35 7,24 Z"
+          d="M6,18 A14 14 0 0 1 34,18 L34,32 Q34,36 30,36 L10,36 Q6,36 6,32 Z"
           fill="currentColor"
           opacity={0.7}
         />
@@ -38,7 +31,7 @@ function ShapePreview({ shape }: { shape: BadgeShape }) {
 export function ShapePicker({ selected, onSelect }: ShapePickerProps) {
   return (
     <div
-      className="grid grid-cols-3 gap-3"
+      className="grid grid-cols-2 gap-3"
       role="radiogroup"
       aria-label="Badge shape"
     >

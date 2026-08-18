@@ -1,198 +1,281 @@
 "use client";
 
 import React, { forwardRef, useId } from "react";
-import type { BadgeConfig } from "@/lib/types";
-import { resolvePalette } from "@/lib/badge-colors";
-import { SHAPES } from "@/lib/badge-shapes";
+import type { BadgeConfig, BadgeDuotone } from "@/lib/types";
+import { MAX_TOP_TEXT, MAX_BOTTOM_TEXT } from "@/lib/types";
+import { resolveDuotone, HALO, STICKER_SHADOW } from "@/lib/badge-colors";
+import { CIRCLE, ARCH } from "@/lib/badge-shapes";
 import { ICON_MAP } from "@/lib/icon-data";
 import { sanitizeForSVG } from "@/lib/sanitize";
+import type { LucideIcon } from "lucide-react";
 
 interface BadgeSVGProps {
   config: BadgeConfig;
   size?: number;
 }
 
+const LETTER_SPACING = 2.5;
+/** Average uppercase glyph advance as a fraction of font size. */
+const GLYPH_WIDTH_RATIO = 0.62;
+
+/** Half-circumference of each text baseline arc, in viewBox units. */
+const ARC_LENGTH = {
+  circleTop: Math.PI * 64,
+  circleBottom: Math.PI * 75,
+  archTop: Math.PI * 50,
+};
+
 /**
- * Renders a shape element (circle or path) with the given fill and optional extras.
+ * Shrinks the font size when the text would overflow its arc, so long
+ * names truncate gracefully instead of spilling past the baseline.
  */
-function Shape({
-  shape,
-  variant,
-  fill,
-  filter,
-  opacity,
-  stroke,
-  strokeWidth,
+function fitFontSize(text: string, base: number, trackLength: number): number {
+  if (!text) return base;
+  const usable = trackLength * 0.94;
+  const fit = (usable / text.length - LETTER_SPACING) / GLYPH_WIDTH_RATIO;
+  return Math.round(Math.min(base, Math.max(7, fit)) * 10) / 10;
+}
+
+/**
+ * Lucide icons are stroke-based, so the "accent with ink stroke" look
+ * is drawn in two passes: a wider ink stroke underneath and the accent
+ * stroke on top, which outlines every icon regardless of its geometry.
+ */
+function StickerIcon({
+  icon: Icon,
+  x,
+  y,
+  iconSize,
+  duotone,
 }: {
-  shape: (typeof SHAPES)[keyof typeof SHAPES];
-  variant: "outer" | "inner";
-  fill: string;
-  filter?: string;
-  opacity?: number;
-  stroke?: string;
-  strokeWidth?: number;
+  icon: LucideIcon;
+  x: number;
+  y: number;
+  iconSize: number;
+  duotone: BadgeDuotone;
 }) {
-  if (shape.type === "circle") {
-    const r = variant === "outer" ? shape.outerRadius! : shape.innerRadius!;
-    return (
-      <circle
-        cx="100"
-        cy="100"
-        r={r}
-        fill={fill}
-        filter={filter}
-        opacity={opacity}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-      />
-    );
-  }
-  const d = variant === "outer" ? shape.outerPath! : shape.innerPath!;
+  const shared = {
+    x,
+    y,
+    width: iconSize,
+    height: iconSize,
+    fill: "none",
+    strokeLinejoin: "round" as const,
+    strokeLinecap: "round" as const,
+  };
   return (
-    <path
-      d={d}
-      fill={fill}
-      filter={filter}
-      opacity={opacity}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-    />
+    <>
+      <Icon {...shared} stroke={duotone.ink} strokeWidth={3.6} />
+      <Icon {...shared} stroke={duotone.accent} strokeWidth={1.8} />
+    </>
   );
 }
 
+/**
+ * Flat curved-text sticker badge. Duotone colors (ink, accent, cream)
+ * derive from the selected palette; the geometry follows the approved
+ * sticker type sheet, with textPath arcs kept inside defs so curved
+ * text survives SVG export.
+ */
 export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
   function BadgeSVG({ config, size = 300 }, ref) {
     const reactId = useId();
     const uid = `b${reactId.replace(/:/g, "")}`;
-    const colors = resolvePalette(config.color);
-    const shape = SHAPES[config.shape];
+    const duotone = resolveDuotone(config.color);
     const iconEntry = ICON_MAP[config.iconName];
     const IconComponent = iconEntry?.component;
+
+    const topText = sanitizeForSVG(config.topText, MAX_TOP_TEXT)
+      .toUpperCase()
+      .trim();
+    const bottomText = sanitizeForSVG(config.bottomText, MAX_BOTTOM_TEXT)
+      .toUpperCase()
+      .trim();
+
+    const isCircle = config.shape === "circle";
 
     return (
       <svg
         ref={ref}
-        viewBox="0 0 200 210"
+        viewBox="0 0 200 200"
         width={size}
-        height={size * 1.05}
+        height={size}
         xmlns="http://www.w3.org/2000/svg"
+        fontFamily="system-ui, sans-serif"
         role="img"
-        aria-label={`${config.name || "Badge"} achievement badge`}
+        aria-label={`${config.topText || "Badge"} achievement badge`}
       >
-        <title>{sanitizeForSVG(config.name || "Badge", 50)}</title>
+        <title>{config.topText || "Badge"}</title>
 
         <defs>
-          {/* ── Outer body gradient: bright top → saturated mid → dark bottom ── */}
-          <linearGradient id={`${uid}-og`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={colors.light} />
-            <stop offset="50%" stopColor={colors.mid} />
-            <stop offset="100%" stopColor={colors.outer} />
-          </linearGradient>
-
-          {/* ── Inner dish: radial gradient, brighter at upper-center ── */}
-          <radialGradient id={`${uid}-ig`} cx="50%" cy="38%" r="65%">
-            <stop offset="0%" stopColor={colors.light} />
-            <stop offset="55%" stopColor={colors.mid} />
-            <stop offset="100%" stopColor={colors.outer} stopOpacity="0.9" />
-          </radialGradient>
-
-          {/* ── Top highlight sheen across outer shape ── */}
-          <linearGradient id={`${uid}-sh`} x1="0.2" y1="0" x2="0.5" y2="0.5">
-            <stop offset="0%" stopColor="white" stopOpacity="0.30" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-
-          {/* ── Inner top shadow (concavity illusion) ── */}
-          <linearGradient id={`${uid}-is`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="black" stopOpacity="0.18" />
-            <stop offset="30%" stopColor="black" stopOpacity="0.06" />
-            <stop offset="100%" stopColor="black" stopOpacity="0" />
-          </linearGradient>
-
-          {/* ── Inner bottom highlight (concavity rim light) ── */}
-          <linearGradient id={`${uid}-bh`} x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stopColor="white" stopOpacity="0.14" />
-            <stop offset="25%" stopColor="white" stopOpacity="0.04" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-
-          {/* ── Outer bottom-edge stroke for 3D depth ── */}
-          <linearGradient id={`${uid}-es`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="black" stopOpacity="0" />
-            <stop offset="70%" stopColor="black" stopOpacity="0.06" />
-            <stop offset="100%" stopColor="black" stopOpacity="0.18" />
-          </linearGradient>
-
-          {/* ── Soft colored glow behind the badge ── */}
-          <filter id={`${uid}-gl`} x="-35%" y="-25%" width="170%" height="160%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" />
-          </filter>
-
-          {/* ── Crisp drop shadow below the badge ── */}
-          <filter id={`${uid}-ds`} x="-15%" y="-10%" width="130%" height="135%">
+          {isCircle ? (
+            <>
+              <path id={`${uid}-arc-top`} d={CIRCLE.arcTop} />
+              <path id={`${uid}-arc-bottom`} d={CIRCLE.arcBottom} />
+            </>
+          ) : (
+            <path id={`${uid}-arc-top`} d={ARCH.arcTop} />
+          )}
+          <filter id={`${uid}-ds`} x="-12%" y="-12%" width="124%" height="128%">
             <feDropShadow
               dx="0"
-              dy="4"
-              stdDeviation="6"
-              floodColor={colors.shadow}
-              floodOpacity="0.8"
+              dy="2"
+              stdDeviation="2"
+              floodColor={STICKER_SHADOW}
+              floodOpacity="0.16"
             />
           </filter>
         </defs>
 
-        <g transform="translate(0, 6)">
-          {/* Layer 0: Soft colored glow behind the badge */}
-          <Shape
-            shape={shape}
-            variant="outer"
-            fill={colors.mid}
-            filter={`url(#${uid}-gl)`}
-            opacity={0.35}
-          />
-
-          {/* Layer 1: Outer body with drop shadow */}
-          <Shape
-            shape={shape}
-            variant="outer"
-            fill={`url(#${uid}-og)`}
-            filter={`url(#${uid}-ds)`}
-          />
-
-          {/* Layer 2: Outer dark bottom-edge stroke for 3D extrusion */}
-          <Shape
-            shape={shape}
-            variant="outer"
-            fill="none"
-            stroke={`url(#${uid}-es)`}
-            strokeWidth={1.5}
-          />
-
-          {/* Layer 3: Sheen highlight on outer shape */}
-          <Shape shape={shape} variant="outer" fill={`url(#${uid}-sh)`} />
-
-          {/* Layer 4: Inner dish with radial gradient */}
-          <Shape shape={shape} variant="inner" fill={`url(#${uid}-ig)`} />
-
-          {/* Layer 5: Inner top shadow (concavity) */}
-          <Shape shape={shape} variant="inner" fill={`url(#${uid}-is)`} />
-
-          {/* Layer 6: Inner bottom rim highlight */}
-          <Shape shape={shape} variant="inner" fill={`url(#${uid}-bh)`} />
-
-          {/* Layer 7: Icon */}
-          {IconComponent && (
-            <IconComponent
-              x={62}
-              y={62}
-              width={76}
-              height={76}
-              stroke={colors.icon}
-              strokeWidth={1.5}
-              fill={colors.icon}
-              fillOpacity={0.2}
+        {isCircle ? (
+          <g>
+            {/* Pale die-cut halo with the single subtle drop shadow */}
+            <circle
+              cx="100"
+              cy="100"
+              r={CIRCLE.haloRadius}
+              fill={HALO}
+              filter={`url(#${uid}-ds)`}
             />
-          )}
-        </g>
+            {/* Ink body */}
+            <circle cx="100" cy="100" r={CIRCLE.bodyRadius} fill={duotone.ink} />
+            {/* Cream pinstripe inside the rim */}
+            <circle
+              cx="100"
+              cy="100"
+              r={CIRCLE.pinstripeRadius}
+              fill="none"
+              stroke={duotone.cream}
+              strokeWidth={1.5}
+              opacity={0.55}
+            />
+            {/* Accent ring around the inner disc */}
+            <circle
+              cx="100"
+              cy="100"
+              r={CIRCLE.ringRadius}
+              fill="none"
+              stroke={duotone.accent}
+              strokeWidth={2.5}
+            />
+            {/* Cream inner disc */}
+            <circle cx="100" cy="100" r={CIRCLE.discRadius} fill={duotone.cream} />
+            {IconComponent && (
+              <StickerIcon
+                icon={IconComponent}
+                x={74}
+                y={74}
+                iconSize={52}
+                duotone={duotone}
+              />
+            )}
+            {topText && (
+              <text
+                fontSize={fitFontSize(topText, 13, ARC_LENGTH.circleTop)}
+                fontWeight={700}
+                letterSpacing={LETTER_SPACING}
+                fill={duotone.cream}
+              >
+                <textPath
+                  href={`#${uid}-arc-top`}
+                  startOffset="50%"
+                  textAnchor="middle"
+                >
+                  {topText}
+                </textPath>
+              </text>
+            )}
+            {bottomText && (
+              <text
+                fontSize={fitFontSize(bottomText, 13, ARC_LENGTH.circleBottom)}
+                fontWeight={700}
+                letterSpacing={LETTER_SPACING}
+                fill={duotone.cream}
+              >
+                <textPath
+                  href={`#${uid}-arc-bottom`}
+                  startOffset="50%"
+                  textAnchor="middle"
+                >
+                  {bottomText}
+                </textPath>
+              </text>
+            )}
+            {CIRCLE.dots.map((dot) => (
+              <circle
+                key={`${dot.cx}-${dot.cy}`}
+                cx={dot.cx}
+                cy={dot.cy}
+                r={3}
+                fill={duotone.accent}
+              />
+            ))}
+          </g>
+        ) : (
+          <g>
+            {/* Pale die-cut halo with the single subtle drop shadow */}
+            <path d={ARCH.haloPath} fill={HALO} filter={`url(#${uid}-ds)`} />
+            {/* Cream body with thick ink outline */}
+            <path
+              d={ARCH.bodyPath}
+              fill={duotone.cream}
+              stroke={duotone.ink}
+              strokeWidth={5}
+              strokeLinejoin="round"
+            />
+            {/* Accent pinline */}
+            <path
+              d={ARCH.pinlinePath}
+              fill="none"
+              stroke={duotone.accent}
+              strokeWidth={2}
+            />
+            {/* Radiating ink dash marks above the icon */}
+            <g stroke={duotone.ink} strokeWidth={3} strokeLinecap="round">
+              {ARCH.rays.map((ray) => (
+                <line key={`${ray.x1}-${ray.y1}`} {...ray} />
+              ))}
+            </g>
+            {IconComponent && (
+              <StickerIcon
+                icon={IconComponent}
+                x={76}
+                y={88}
+                iconSize={48}
+                duotone={duotone}
+              />
+            )}
+            {topText && (
+              <text
+                fontSize={fitFontSize(topText, 12, ARC_LENGTH.archTop)}
+                fontWeight={700}
+                letterSpacing={LETTER_SPACING}
+                fill={duotone.ink}
+              >
+                <textPath
+                  href={`#${uid}-arc-top`}
+                  startOffset="50%"
+                  textAnchor="middle"
+                >
+                  {topText}
+                </textPath>
+              </text>
+            )}
+            {bottomText && (
+              <text
+                x={100}
+                y={ARCH.captionY}
+                fontSize={fitFontSize(bottomText, 9, 118)}
+                fontWeight={700}
+                letterSpacing={LETTER_SPACING}
+                fill={duotone.ink}
+                textAnchor="middle"
+              >
+                {bottomText}
+              </text>
+            )}
+          </g>
+        )}
       </svg>
     );
   },

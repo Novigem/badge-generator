@@ -1,47 +1,53 @@
 import type { BadgeShape } from "./types";
 
-/** All paths are in a 200×200 viewBox, centered at (100,100). */
+/**
+ * Flat "curved-text sticker" geometry, all in a 200x200 viewBox
+ * centered at (100,100). Arc math verified in headless Chrome:
+ * the bottom arc uses a reversed sweep so its text reads upright.
+ */
 
-// Hexagon: pointy-top orientation
-const HEXAGON_OUTER =
-  "M100,10 L183,50 L183,150 L100,190 L17,150 L17,50 Z";
-const HEXAGON_INNER =
-  "M100,30 L167,62 L167,138 L100,170 L33,138 L33,62 Z";
+export const CIRCLE = {
+  haloRadius: 95,
+  bodyRadius: 88,
+  pinstripeRadius: 83,
+  ringRadius: 52,
+  discRadius: 46,
+  /** Top text baseline: r64 arc, glyphs grow outward toward the rim. */
+  arcTop: "M 36,100 A 64 64 0 0 1 164,100",
+  /** Bottom text baseline: r75 arc, reversed sweep, glyphs grow inward. */
+  arcBottom: "M 25,100 A 75 75 0 0 0 175,100",
+  /** Accent dots on the horizontal midline, between the two arcs. */
+  dots: [
+    { cx: 30.5, cy: 100 },
+    { cx: 169.5, cy: 100 },
+  ],
+} as const;
 
-// Shield: slim, tall, gentle top arch, angular shoulders, straight sides, smooth bottom point
-const SHIELD_OUTER =
-  "M24,34 Q62,10 100,10 Q138,10 176,34 L176,124 Q176,172 100,196 Q24,172 24,124 Z";
-const SHIELD_INNER =
-  "M40,48 Q66,28 100,28 Q134,28 160,48 L160,118 Q160,158 100,178 Q40,158 40,118 Z";
-
-export interface ShapeConfig {
-  type: "path" | "circle";
-  outerPath?: string;
-  innerPath?: string;
-  outerRadius?: number;
-  innerRadius?: number;
-}
-
-export const SHAPES: Record<BadgeShape, ShapeConfig> = {
-  hexagon: {
-    type: "path",
-    outerPath: HEXAGON_OUTER,
-    innerPath: HEXAGON_INNER,
-  },
-  circle: {
-    type: "circle",
-    outerRadius: 90,
-    innerRadius: 70,
-  },
-  shield: {
-    type: "path",
-    outerPath: SHIELD_OUTER,
-    innerPath: SHIELD_INNER,
-  },
-};
+export const ARCH = {
+  /** Pale die-cut halo behind the sticker. */
+  haloPath:
+    "M 22 90 A 78 78 0 0 1 178 90 L 178 168 Q 178 188 158 188 L 42 188 Q 22 188 22 168 Z",
+  /** Cream body with a thick ink outline: half-circle top, rounded base. */
+  bodyPath:
+    "M 30 90 A 70 70 0 0 1 170 90 L 170 164 Q 170 180 154 180 L 46 180 Q 30 180 30 164 Z",
+  /** Thin accent pinline inset from the body. */
+  pinlinePath:
+    "M 38 90 A 62 62 0 0 1 162 90 L 162 160 Q 162 172 152 172 L 48 172 Q 38 172 38 160 Z",
+  /** Arch text baseline: r50, concentric with the r70 crown. */
+  arcTop: "M 50,90 A 50 50 0 0 1 150,90",
+  /** Radiating ink dash marks above the icon. */
+  rays: [
+    { x1: 100, y1: 82, x2: 100, y2: 72 },
+    { x1: 110.3, y1: 83.8, x2: 113.7, y2: 74.4 },
+    { x1: 89.7, y1: 83.8, x2: 86.3, y2: 74.4 },
+    { x1: 119.3, y1: 89, x2: 125.7, y2: 81.4 },
+    { x1: 80.7, y1: 89, x2: 74.3, y2: 81.4 },
+  ],
+  /** Straight caps line near the base for the bottom text. */
+  captionY: 158,
+} as const;
 
 export const SHAPE_LABELS: Record<BadgeShape, string> = {
-  hexagon: "Hexagon",
   circle: "Circle",
-  shield: "Shield",
+  arch: "Arch",
 };
