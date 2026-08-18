@@ -47,6 +47,8 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
+After adding or removing icons in `lib/icon-data.ts`, run `node scripts/generate-icon-bboxes.mjs` to regenerate the icon bounding-box map used for icon placement.
+
 ---
 
 ## Project Structure

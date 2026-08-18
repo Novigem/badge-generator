@@ -6,6 +6,7 @@ import { MAX_TOP_TEXT, MAX_BOTTOM_TEXT } from "@/lib/types";
 import { resolveDuotone, HALO, STICKER_SHADOW } from "@/lib/badge-colors";
 import { CIRCLE, ARCH } from "@/lib/badge-shapes";
 import { ICON_MAP } from "@/lib/icon-data";
+import { ICON_BBOXES } from "@/lib/icon-bboxes";
 import { sanitizeForSVG } from "@/lib/sanitize";
 import type { LucideIcon } from "lucide-react";
 
@@ -37,36 +38,100 @@ function fitFontSize(text: string, base: number, trackLength: number): number {
 }
 
 /**
+ * Per-shape icon placement targets, in viewBox units. `box` is the
+ * legacy square used when an icon is missing from the bbox map;
+ * `target` and `clear` drive the normalized placement below, tuned so
+ * the brain icon (the approved reference) renders unchanged.
+ */
+interface IconFit {
+  /** Anchor the icon's visual center lands on. */
+  cx: number;
+  cy: number;
+  /** Legacy square icon box, used as the fallback transform. */
+  box: number;
+  /** Max drawn dimension (bbox `w`/`h`) after scaling. */
+  target: number;
+  /** Max drawn radius (bbox `r`) from the anchor after scaling. */
+  clear: number;
+}
+
+const ARCH_ICON_FIT: IconFit = {
+  cx: 100,
+  cy: 112,
+  box: 48,
+  target: 48.8,
+  clear: 26.8,
+};
+
+const CIRCLE_ICON_FIT: IconFit = {
+  cx: 100,
+  cy: 100,
+  box: 52,
+  target: 52.9,
+  clear: 29,
+};
+
+/**
  * Lucide icons are stroke-based, so the "accent with ink stroke" look
  * is drawn in two passes: a wider ink stroke underneath and the accent
  * stroke on top, which outlines every icon regardless of its geometry.
+ *
+ * All icons share a 24x24 viewBox but their drawn content varies, so
+ * placement is normalized against the precomputed bbox map: the icon is
+ * centered on its visual center and scaled so its largest dimension hits
+ * `target`, capped so no drawn point gets closer to the arch's dash fan
+ * than `clear` allows. Diagonally drawn icons like the rocket reach far
+ * along the diagonal at an ordinary bbox size, which is why the radial
+ * cap (not the box) is what keeps the gap below the dashes constant.
+ * Stroke widths are compensated so ink weight matches at every scale.
  */
 function StickerIcon({
   icon: Icon,
-  x,
-  y,
-  iconSize,
+  iconKey,
+  fit,
   duotone,
 }: {
   icon: LucideIcon;
-  x: number;
-  y: number;
-  iconSize: number;
+  iconKey: string;
+  fit: IconFit;
   duotone: BadgeDuotone;
 }) {
+  const bbox = ICON_BBOXES[iconKey];
+  const baseScale = fit.box / 24;
+
+  let x = fit.cx - fit.box / 2;
+  let y = fit.cy - fit.box / 2;
+  let size = fit.box;
+  let strokeScale = 1;
+
+  if (bbox) {
+    const scale = Math.min(
+      fit.target / Math.max(bbox.w, bbox.h),
+      fit.clear / bbox.r,
+    );
+    size = 24 * scale;
+    x = fit.cx - (bbox.x + bbox.w / 2) * scale;
+    y = fit.cy - (bbox.y + bbox.h / 2) * scale;
+    strokeScale = baseScale / scale;
+  }
+
   const shared = {
     x,
     y,
-    width: iconSize,
-    height: iconSize,
+    width: size,
+    height: size,
     fill: "none",
     strokeLinejoin: "round" as const,
     strokeLinecap: "round" as const,
   };
   return (
     <>
-      <Icon {...shared} stroke={duotone.ink} strokeWidth={3.6} />
-      <Icon {...shared} stroke={duotone.accent} strokeWidth={1.8} />
+      <Icon {...shared} stroke={duotone.ink} strokeWidth={3.6 * strokeScale} />
+      <Icon
+        {...shared}
+        stroke={duotone.accent}
+        strokeWidth={1.8 * strokeScale}
+      />
     </>
   );
 }
@@ -163,9 +228,8 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
             {IconComponent && (
               <StickerIcon
                 icon={IconComponent}
-                x={74}
-                y={74}
-                iconSize={52}
+                iconKey={config.iconName}
+                fit={CIRCLE_ICON_FIT}
                 duotone={duotone}
               />
             )}
@@ -239,9 +303,8 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
             {IconComponent && (
               <StickerIcon
                 icon={IconComponent}
-                x={76}
-                y={88}
-                iconSize={48}
+                iconKey={config.iconName}
+                fit={ARCH_ICON_FIT}
                 duotone={duotone}
               />
             )}
