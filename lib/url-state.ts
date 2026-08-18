@@ -52,6 +52,7 @@ export function buildShareUrl(config: BadgeConfig): string {
 
 /**
  * Updates the browser URL bar without triggering navigation.
+ * Callers should debounce this: Safari rate-limits replaceState.
  */
 export function syncUrlToConfig(config: BadgeConfig): void {
   const params = new URLSearchParams();

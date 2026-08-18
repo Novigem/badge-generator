@@ -46,10 +46,13 @@ function BadgeBuilderInner() {
     }
   }, [searchParams]);
 
-  // Sync URL whenever config changes (after initial load)
+  // Sync URL whenever config changes (after initial load).
+  // Debounced: Safari rate-limits history.replaceState and throws
+  // when it fires on every keystroke.
   useEffect(() => {
     if (!initializedRef.current) return;
-    syncUrlToConfig(config);
+    const timer = setTimeout(() => syncUrlToConfig(config), 300);
+    return () => clearTimeout(timer);
   }, [config]);
 
   const handleChange = useCallback(
