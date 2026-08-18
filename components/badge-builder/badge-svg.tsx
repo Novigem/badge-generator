@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useId } from "react";
 import type { BadgeConfig } from "@/lib/types";
-import { BADGE_COLORS } from "@/lib/badge-colors";
+import { resolvePalette } from "@/lib/badge-colors";
 import { SHAPES } from "@/lib/badge-shapes";
 import { ICON_MAP } from "@/lib/icon-data";
 import { sanitizeForSVG } from "@/lib/sanitize";
@@ -64,7 +64,7 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
   function BadgeSVG({ config, size = 300 }, ref) {
     const reactId = useId();
     const uid = `b${reactId.replace(/:/g, "")}`;
-    const colors = BADGE_COLORS[config.tier];
+    const colors = resolvePalette(config.color);
     const shape = SHAPES[config.shape];
     const iconEntry = ICON_MAP[config.iconName];
     const IconComponent = iconEntry?.component;

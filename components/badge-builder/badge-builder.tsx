@@ -8,7 +8,7 @@ import { BadgeControls } from "./badge-controls";
 import { DownloadButton } from "./download-button";
 import { ShareButtons } from "./share-buttons";
 import { ICON_MAP } from "@/lib/icon-data";
-import { BADGE_COLORS } from "@/lib/badge-colors";
+import { resolvePalette } from "@/lib/badge-colors";
 import {
   parseConfigFromParams,
   buildShareUrl,
@@ -18,7 +18,7 @@ import {
 const defaultConfig: BadgeConfig = {
   name: "Achievement",
   iconName: "star",
-  tier: "gold",
+  color: { kind: "tier", tier: "gold" },
   shape: "hexagon",
 };
 
@@ -83,7 +83,7 @@ function BadgeBuilderInner() {
                 <div
                   className="absolute inset-0 blur-3xl opacity-20 rounded-full"
                   style={{
-                    background: `radial-gradient(circle, ${BADGE_COLORS[config.tier].mid}, transparent)`,
+                    background: `radial-gradient(circle, ${resolvePalette(config.color).mid}, transparent)`,
                   }}
                 />
                 <BadgeSVG ref={svgRef} config={config} size={280} />

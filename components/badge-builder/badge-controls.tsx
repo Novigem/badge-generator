@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IconPicker } from "./icon-picker";
 import { ShapePicker } from "./shape-picker";
-import { TierPicker } from "./tier-picker";
-import type { BadgeConfig, BadgeTier, BadgeShape } from "@/lib/types";
+import { ColorPicker } from "./color-picker";
+import type { BadgeConfig, BadgeColor, BadgeShape } from "@/lib/types";
 
 interface BadgeControlsProps {
   config: BadgeConfig;
@@ -42,12 +42,12 @@ export function BadgeControls({ config, onChange }: BadgeControlsProps) {
         />
       </div>
 
-      {/* Tier / Color */}
+      {/* Color */}
       <div className="space-y-2">
-        <Label className="heading-sm">Color Tier</Label>
-        <TierPicker
-          selected={config.tier}
-          onSelect={(tier: BadgeTier) => onChange({ tier })}
+        <Label className="heading-sm">Color</Label>
+        <ColorPicker
+          selected={config.color}
+          onSelect={(color: BadgeColor) => onChange({ color })}
         />
       </div>
 
