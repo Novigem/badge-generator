@@ -9,8 +9,8 @@ A free, client-side tool for designing custom achievement badges in a flat curve
 ## Features
 
 - **4 badge shapes** · circle, arch, star, and rosette, drawn as flat die-cut stickers with curved text
-- **Two text lines** · uppercase top text on the arc plus an optional bottom line (curved on the circle, a small caps line on the arch)
-- **Any colour** · 12 presets (bronze, silver, gold, ruby, emerald, blue, purple, teal, orange, pink, slate, black) plus a free colour picker; each base colour maps to a duotone of ink, accent, and cream
+- **Two text lines** · uppercase top text on the arc plus an optional bottom line (curved on the circle, a small caps line on the arch and star, a ribbon banner on the rosette)
+- **Any colour** · 9 presets (bronze, silver, gold, ruby, emerald, blue, teal, orange, black) plus a free colour picker; each base colour maps to a duotone of ink, accent, and cream
 - **108 curated icons** · sourced from Lucide
 - **High-res export** · transparent PNG at 2x resolution and SVG
 - **Shareable URLs** · badge configuration encoded in URL params so you can share a direct link to your design
