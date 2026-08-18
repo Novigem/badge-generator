@@ -30,7 +30,7 @@ const ARC_LENGTH = {
   circleBottom: Math.PI * 75,
   archTop: Math.PI * 50,
   starTop: Math.PI * 45.5,
-  rosetteTop: Math.PI * 52,
+  rosetteTop: Math.PI * 50,
 };
 
 /**
@@ -519,7 +519,7 @@ export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
             )}
             {topText && (
               <text
-                fontSize={fitFontSize(topText, 11.5, ARC_LENGTH.rosetteTop)}
+                fontSize={fitFontSize(topText, 10.5, ARC_LENGTH.rosetteTop)}
                 fontWeight={700}
                 letterSpacing={LETTER_SPACING}
                 fill={duotone.cream}

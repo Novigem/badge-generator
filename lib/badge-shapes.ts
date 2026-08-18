@@ -117,12 +117,16 @@ export const ROSETTE = {
   pinstripeRadius: 68,
   ringRadius: 42.5,
   discRadius: 37.5,
-  /** Top text baseline: r52 arc concentric with the raised circle. */
-  arcTop: "M 48,86 A 52 52 0 0 1 152,86",
-  /** Accent dots on the circle midline. */
+  /**
+   * Top text baseline: r50 arc concentric with the raised circle,
+   * pulled slightly inside the proportional radius so the glyph tops
+   * keep clear air under the pinstripe even at small render sizes.
+   */
+  arcTop: "M 50,86 A 50 50 0 0 1 150,86",
+  /** Accent dots on the circle midline, between text band and pinstripe. */
   dots: [
-    { cx: 41, cy: 86 },
-    { cx: 159, cy: 86 },
+    { cx: 39, cy: 86 },
+    { cx: 161, cy: 86 },
   ],
   /**
    * Ribbon banner, shown only when there is bottom text. The wings sit
