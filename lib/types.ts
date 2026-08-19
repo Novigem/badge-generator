@@ -1,10 +1,30 @@
 export type BadgeTier = "bronze" | "silver" | "gold" | "ruby" | "emerald";
-export type BadgeShape = "hexagon" | "circle" | "shield";
+export type BadgeShape = "circle" | "arch" | "star" | "rosette";
+
+/**
+ * Badge color is either one of the hand-tuned tiers or a custom
+ * hex color whose palette is derived at render time.
+ */
+export type BadgeColor =
+  | { kind: "tier"; tier: BadgeTier }
+  | { kind: "custom"; hex: string };
+
+/** Maximum characters that fit the curved text arcs without overflow. */
+export const MAX_TOP_TEXT = 16;
+export const MAX_BOTTOM_TEXT = 16;
 
 export interface BadgeConfig {
-  name: string;
+  /** Curved text along the top arc. Stored as typed; uppercased at render. */
+  topText: string;
+  /**
+   * Bottom line: curved along the bottom arc on the circle shape, a
+   * small straight caps line on the arch and star shapes, and the
+   * ribbon banner text on the rosette. Empty hides it (on the rosette
+   * it hides the whole ribbon).
+   */
+  bottomText: string;
   iconName: string;
-  tier: BadgeTier;
+  color: BadgeColor;
   shape: BadgeShape;
 }
 
@@ -15,4 +35,14 @@ export interface BadgeColorPalette {
   icon: string;
   shadow: string;
   innerShadow: string;
+}
+
+/** Flat sticker colorway derived from a palette. */
+export interface BadgeDuotone {
+  /** Dark outline and body color. */
+  ink: string;
+  /** The base color: rings, icon, dots. */
+  accent: string;
+  /** Fixed warm paper tone for discs and light text. */
+  cream: string;
 }
