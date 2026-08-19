@@ -27,10 +27,10 @@ export function Hero() {
   const group = reduceMotion ? noAnim : stagger;
 
   return (
-    <section className="relative isolate w-full overflow-hidden bg-neutral-50">
+    <section className="relative isolate w-full overflow-hidden bg-muted/40">
       {/* Soft radial background glow */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-amber-200/30 via-emerald-200/20 to-transparent blur-3xl" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-amber-200/30 via-emerald-200/20 to-transparent blur-3xl dark:from-amber-400/10 dark:via-emerald-400/10" />
       </div>
 
       <div className="mx-auto flex min-h-[70vh] max-w-3xl items-center justify-center px-6 py-24">
