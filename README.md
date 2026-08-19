@@ -1,6 +1,6 @@
 # Badge Builder by Novigem
 
-A free, client-side tool for designing custom achievement badges. Pick a shape, colour tier, and icon, then download as transparent PNG or SVG.
+A free, client-side tool for designing custom achievement badges in a flat curved-text sticker style. Add your text, pick a shape, colour, and icon, then download as transparent PNG or SVG.
 
 **[badges.novigem.com](https://badges.novigem.com)**
 
@@ -8,8 +8,9 @@ A free, client-side tool for designing custom achievement badges. Pick a shape, 
 
 ## Features
 
-- **3 badge shapes** · hexagon, circle, shield
-- **5 colour tiers** · bronze, silver, gold, ruby, emerald
+- **4 badge shapes** · circle, arch, star, and rosette, drawn as flat die-cut stickers with curved text
+- **Two text lines** · uppercase top text on the arc plus an optional bottom line (curved on the circle, a small caps line on the arch and star, a ribbon banner on the rosette)
+- **Any colour** · 9 presets (bronze, silver, gold, ruby, emerald, blue, teal, orange, black) plus a free colour picker; each base colour maps to a duotone of ink, accent, and cream
 - **108 curated icons** · sourced from Lucide
 - **High-res export** · transparent PNG at 2x resolution and SVG
 - **Shareable URLs** · badge configuration encoded in URL params so you can share a direct link to your design
@@ -46,6 +47,8 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
+After adding or removing icons in `lib/icon-data.ts`, run `node scripts/generate-icon-bboxes.mjs` to regenerate the icon bounding-box map used for icon placement.
+
 ---
 
 ## Project Structure
@@ -58,22 +61,22 @@ app/
 
 components/
   badge-builder/            # Core builder components
-    badge-svg.tsx            # Layered SVG renderer with gradients and shadows
-    badge-controls.tsx       # Shape, tier, icon, and name controls
+    badge-svg.tsx            # Flat sticker SVG renderer with curved textPath arcs
+    badge-controls.tsx       # Text, shape, colour, and icon controls
     badge-builder.tsx        # Main container with URL state sync
     download-button.tsx      # PNG and SVG export
     share-buttons.tsx        # Social sharing (X, LinkedIn, copy, native)
     icon-picker.tsx          # Searchable icon grid
     shape-picker.tsx         # Visual shape selector
-    tier-picker.tsx          # Colour tier selector
+    color-picker.tsx         # Colour presets and custom colour input
   sections/
     hero.tsx                 # Animated hero section
     site-footer.tsx          # Footer with Novigem CTA and social links
 
 lib/
-  types.ts                  # BadgeConfig, BadgeTier, BadgeShape types
-  badge-colors.ts           # Colour palettes per tier
-  badge-shapes.ts           # SVG paths for each shape
+  types.ts                  # BadgeConfig, BadgeColor, BadgeShape types
+  badge-colors.ts           # Tier palettes, palette derivation, and duotone mapping
+  badge-shapes.ts           # Sticker geometry: circle rings and arch paths, text arcs
   icon-data.ts              # Icon registry with search tags
   export.ts                 # SVG/PNG download utilities
   url-state.ts              # URL param serialisation and validation

@@ -10,11 +10,14 @@ export function downloadSVG(svgEl: SVGSVGElement, filename: string): void {
   triggerDownload(blob, `${filename}.svg`);
 }
 
-export function downloadPNG(
+/**
+ * Rasterizes an SVG element to a PNG blob at the given scale.
+ * Shared by PNG download and native sharing.
+ */
+export function svgToPngBlob(
   svgEl: SVGSVGElement,
-  filename: string,
   scale = 2,
-): Promise<void> {
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svgEl);
@@ -45,8 +48,7 @@ export function downloadPNG(
           reject(new Error("Could not create PNG blob"));
           return;
         }
-        triggerDownload(pngBlob, `${filename}.png`);
-        resolve();
+        resolve(pngBlob);
       }, "image/png");
     };
 
@@ -57,6 +59,15 @@ export function downloadPNG(
 
     img.src = url;
   });
+}
+
+export async function downloadPNG(
+  svgEl: SVGSVGElement,
+  filename: string,
+  scale = 2,
+): Promise<void> {
+  const pngBlob = await svgToPngBlob(svgEl, scale);
+  triggerDownload(pngBlob, `${filename}.png`);
 }
 
 function triggerDownload(blob: Blob, filename: string): void {
