@@ -3,15 +3,21 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Copy, Share2 } from "lucide-react";
-import { XIcon } from "@/components/icons/x-icon";
-import { svgToPngBlob } from "@/lib/export";
 
 const SHARE_TEXT =
-  "I just designed a custom achievement badge with Badge Builder by Novigem. Try it free!";
+  "I just designed a custom achievement badge with Badge Builder by @novaborsa — try it free!";
 
 interface ShareButtonsProps {
   svgRef: React.RefObject<SVGSVGElement | null>;
   shareUrl: string;
+}
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
 }
 
 function LinkedInIcon({ className }: { className?: string }) {
@@ -22,14 +28,9 @@ function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
-function isShareCancel(err: unknown): boolean {
-  return err instanceof DOMException && err.name === "AbortError";
-}
-
 export function ShareButtons({ svgRef, shareUrl }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setCanNativeShare(!!navigator.share);
@@ -52,22 +53,49 @@ export function ShareButtons({ svgRef, shareUrl }: ShareButtonsProps) {
   }, [shareUrl]);
 
   const copyLink = useCallback(async () => {
-    setError(null);
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError("Could not copy the link. Copy it from the address bar instead.");
+      // Fallback: prompt user
     }
   }, [shareUrl]);
 
   const nativeShare = useCallback(async () => {
     if (!svgRef.current || !navigator.share) return;
-    setError(null);
 
     try {
-      const pngBlob = await svgToPngBlob(svgRef.current, 2);
+      // Convert SVG to PNG blob for sharing
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svgRef.current);
+      const svgBlob = new Blob([svgString], {
+        type: "image/svg+xml;charset=utf-8",
+      });
+      const blobUrl = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject();
+        img.src = blobUrl;
+      });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth * 2;
+      canvas.height = img.naturalHeight * 2;
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(2, 2);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(blobUrl);
+
+      const pngBlob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject();
+        }, "image/png");
+      });
+
       const file = new File([pngBlob], "badge.png", { type: "image/png" });
 
       await navigator.share({
@@ -76,18 +104,16 @@ export function ShareButtons({ svgRef, shareUrl }: ShareButtonsProps) {
         url: shareUrl,
         files: [file],
       });
-    } catch (err) {
-      if (isShareCancel(err)) return;
-      // Sharing with a file failed, retry without it
+    } catch {
+      // User cancelled or share failed — try without file
       try {
         await navigator.share({
           title: "My Custom Badge",
           text: SHARE_TEXT,
           url: shareUrl,
         });
-      } catch (retryErr) {
-        if (isShareCancel(retryErr)) return;
-        setError("Sharing failed. Copy the link instead.");
+      } catch {
+        // User cancelled
       }
     }
   }, [svgRef, shareUrl]);
@@ -122,7 +148,7 @@ export function ShareButtons({ svgRef, shareUrl }: ShareButtonsProps) {
           className="btn-interactive"
         >
           {copied ? (
-            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <Check className="h-4 w-4 text-emerald-600" />
           ) : (
             <Copy className="h-4 w-4" />
           )}
@@ -139,11 +165,6 @@ export function ShareButtons({ svgRef, shareUrl }: ShareButtonsProps) {
           </Button>
         )}
       </div>
-      {error && (
-        <p role="alert" className="text-xs text-destructive text-center">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

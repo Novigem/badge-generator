@@ -1,577 +1,198 @@
 "use client";
 
 import React, { forwardRef, useId } from "react";
-import type { BadgeConfig, BadgeDuotone } from "@/lib/types";
-import { MAX_TOP_TEXT, MAX_BOTTOM_TEXT } from "@/lib/types";
-import {
-  resolveDuotone,
-  darkenHex,
-  HALO,
-  STICKER_SHADOW,
-} from "@/lib/badge-colors";
-import { CIRCLE, ARCH, STAR, ROSETTE } from "@/lib/badge-shapes";
+import type { BadgeConfig } from "@/lib/types";
+import { BADGE_COLORS } from "@/lib/badge-colors";
+import { SHAPES } from "@/lib/badge-shapes";
 import { ICON_MAP } from "@/lib/icon-data";
-import { ICON_BBOXES } from "@/lib/icon-bboxes";
 import { sanitizeForSVG } from "@/lib/sanitize";
-import type { LucideIcon } from "lucide-react";
 
 interface BadgeSVGProps {
   config: BadgeConfig;
   size?: number;
 }
 
-const LETTER_SPACING = 2.5;
-/** Average uppercase glyph advance as a fraction of font size. */
-const GLYPH_WIDTH_RATIO = 0.62;
-
-/** Half-circumference of each text baseline arc, in viewBox units. */
-const ARC_LENGTH = {
-  circleTop: Math.PI * 64,
-  circleBottom: Math.PI * 75,
-  archTop: Math.PI * 47,
-  starTop: Math.PI * 45.5,
-  rosetteTop: Math.PI * 50,
-};
-
 /**
- * Shrinks the font size when the text would overflow its arc, so long
- * names truncate gracefully instead of spilling past the baseline.
+ * Renders a shape element (circle or path) with the given fill and optional extras.
  */
-function fitFontSize(text: string, base: number, trackLength: number): number {
-  if (!text) return base;
-  // Real glyphs run a little wider than the average-ratio estimate, so
-  // the usable factor keeps a safety margin against textPath overflow.
-  const usable = trackLength * 0.86;
-  const fit = (usable / text.length - LETTER_SPACING) / GLYPH_WIDTH_RATIO;
-  return Math.round(Math.min(base, Math.max(7, fit)) * 10) / 10;
-}
-
-/**
- * Per-shape icon placement targets, in viewBox units. `box` is the
- * legacy square used when an icon is missing from the bbox map;
- * `target` and `clear` drive the normalized placement below, tuned so
- * the brain icon (the approved reference) renders unchanged.
- */
-interface IconFit {
-  /** Anchor the icon's visual center lands on. */
-  cx: number;
-  cy: number;
-  /** Legacy square icon box, used as the fallback transform. */
-  box: number;
-  /** Max drawn dimension (bbox `w`/`h`) after scaling. */
-  target: number;
-  /** Max drawn radius (bbox `r`) from the anchor after scaling. */
-  clear: number;
-}
-
-const ARCH_ICON_FIT: IconFit = {
-  cx: 100,
-  cy: 112,
-  box: 48,
-  target: 48.8,
-  clear: 26.8,
-};
-
-const CIRCLE_ICON_FIT: IconFit = {
-  cx: 100,
-  cy: 100,
-  box: 52,
-  target: 52.9,
-  clear: 29,
-};
-
-const STAR_ICON_FIT: IconFit = {
-  cx: 100,
-  cy: 100,
-  box: 45,
-  target: 46,
-  clear: 25.2,
-};
-
-const ROSETTE_ICON_FIT: IconFit = {
-  cx: 100,
-  cy: 86,
-  box: 42,
-  target: 43.1,
-  clear: 23.6,
-};
-
-/**
- * Lucide icons are stroke-based, so the "accent with ink stroke" look
- * is drawn in two passes: a wider ink stroke underneath and the accent
- * stroke on top, which outlines every icon regardless of its geometry.
- *
- * All icons share a 24x24 viewBox but their drawn content varies, so
- * placement is normalized against the precomputed bbox map: the icon is
- * centered on its visual center and scaled so its largest dimension hits
- * `target`, capped so no drawn point gets closer to the arch's dash fan
- * than `clear` allows. Diagonally drawn icons like the rocket reach far
- * along the diagonal at an ordinary bbox size, which is why the radial
- * cap (not the box) is what keeps the gap below the dashes constant.
- * Stroke widths are compensated so ink weight matches at every scale.
- */
-function StickerIcon({
-  icon: Icon,
-  iconKey,
-  fit,
-  duotone,
+function Shape({
+  shape,
+  variant,
+  fill,
+  filter,
+  opacity,
+  stroke,
+  strokeWidth,
 }: {
-  icon: LucideIcon;
-  iconKey: string;
-  fit: IconFit;
-  duotone: BadgeDuotone;
+  shape: (typeof SHAPES)[keyof typeof SHAPES];
+  variant: "outer" | "inner";
+  fill: string;
+  filter?: string;
+  opacity?: number;
+  stroke?: string;
+  strokeWidth?: number;
 }) {
-  const bbox = ICON_BBOXES[iconKey];
-  const baseScale = fit.box / 24;
-
-  let x = fit.cx - fit.box / 2;
-  let y = fit.cy - fit.box / 2;
-  let size = fit.box;
-  let strokeScale = 1;
-
-  if (bbox) {
-    const scale = Math.min(
-      fit.target / Math.max(bbox.w, bbox.h),
-      fit.clear / bbox.r,
-    );
-    size = 24 * scale;
-    x = fit.cx - (bbox.x + bbox.w / 2) * scale;
-    y = fit.cy - (bbox.y + bbox.h / 2) * scale;
-    strokeScale = baseScale / scale;
-  }
-
-  const shared = {
-    x,
-    y,
-    width: size,
-    height: size,
-    fill: "none",
-    strokeLinejoin: "round" as const,
-    strokeLinecap: "round" as const,
-  };
-  return (
-    <>
-      <Icon {...shared} stroke={duotone.ink} strokeWidth={3.6 * strokeScale} />
-      <Icon
-        {...shared}
-        stroke={duotone.accent}
-        strokeWidth={1.8 * strokeScale}
+  if (shape.type === "circle") {
+    const r = variant === "outer" ? shape.outerRadius! : shape.innerRadius!;
+    return (
+      <circle
+        cx="100"
+        cy="100"
+        r={r}
+        fill={fill}
+        filter={filter}
+        opacity={opacity}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
       />
-    </>
+    );
+  }
+  const d = variant === "outer" ? shape.outerPath! : shape.innerPath!;
+  return (
+    <path
+      d={d}
+      fill={fill}
+      filter={filter}
+      opacity={opacity}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+    />
   );
 }
 
-/**
- * Flat curved-text sticker badge. Duotone colors (ink, accent, cream)
- * derive from the selected palette; the geometry follows the approved
- * sticker type sheet, with textPath arcs kept inside defs so curved
- * text survives SVG export.
- */
 export const BadgeSVG = forwardRef<SVGSVGElement, BadgeSVGProps>(
   function BadgeSVG({ config, size = 300 }, ref) {
     const reactId = useId();
     const uid = `b${reactId.replace(/:/g, "")}`;
-    const duotone = resolveDuotone(config.color);
+    const colors = BADGE_COLORS[config.tier];
+    const shape = SHAPES[config.shape];
     const iconEntry = ICON_MAP[config.iconName];
     const IconComponent = iconEntry?.component;
-
-    const topText = sanitizeForSVG(config.topText, MAX_TOP_TEXT)
-      .toUpperCase()
-      .trim();
-    const bottomText = sanitizeForSVG(config.bottomText, MAX_BOTTOM_TEXT)
-      .toUpperCase()
-      .trim();
-
-    const isCircle = config.shape === "circle";
-    const isArch = config.shape === "arch";
-    const isStar = config.shape === "star";
-    const isRosette = config.shape === "rosette";
 
     return (
       <svg
         ref={ref}
-        viewBox="0 0 200 200"
+        viewBox="0 0 200 210"
         width={size}
-        height={size}
+        height={size * 1.05}
         xmlns="http://www.w3.org/2000/svg"
-        fontFamily="system-ui, sans-serif"
         role="img"
-        aria-label={`${config.topText || "Badge"} achievement badge`}
+        aria-label={`${config.name || "Badge"} achievement badge`}
       >
-        <title>{config.topText || "Badge"}</title>
+        <title>{sanitizeForSVG(config.name || "Badge", 50)}</title>
 
         <defs>
-          {isCircle && (
-            <>
-              <path id={`${uid}-arc-top`} d={CIRCLE.arcTop} />
-              <path id={`${uid}-arc-bottom`} d={CIRCLE.arcBottom} />
-            </>
-          )}
-          {isArch && <path id={`${uid}-arc-top`} d={ARCH.arcTop} />}
-          {isStar && <path id={`${uid}-arc-top`} d={STAR.arcTop} />}
-          {isRosette && <path id={`${uid}-arc-top`} d={ROSETTE.arcTop} />}
-          <filter id={`${uid}-ds`} x="-12%" y="-12%" width="124%" height="128%">
+          {/* ── Outer body gradient: bright top → saturated mid → dark bottom ── */}
+          <linearGradient id={`${uid}-og`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors.light} />
+            <stop offset="50%" stopColor={colors.mid} />
+            <stop offset="100%" stopColor={colors.outer} />
+          </linearGradient>
+
+          {/* ── Inner dish: radial gradient, brighter at upper-center ── */}
+          <radialGradient id={`${uid}-ig`} cx="50%" cy="38%" r="65%">
+            <stop offset="0%" stopColor={colors.light} />
+            <stop offset="55%" stopColor={colors.mid} />
+            <stop offset="100%" stopColor={colors.outer} stopOpacity="0.9" />
+          </radialGradient>
+
+          {/* ── Top highlight sheen across outer shape ── */}
+          <linearGradient id={`${uid}-sh`} x1="0.2" y1="0" x2="0.5" y2="0.5">
+            <stop offset="0%" stopColor="white" stopOpacity="0.30" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </linearGradient>
+
+          {/* ── Inner top shadow (concavity illusion) ── */}
+          <linearGradient id={`${uid}-is`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="black" stopOpacity="0.18" />
+            <stop offset="30%" stopColor="black" stopOpacity="0.06" />
+            <stop offset="100%" stopColor="black" stopOpacity="0" />
+          </linearGradient>
+
+          {/* ── Inner bottom highlight (concavity rim light) ── */}
+          <linearGradient id={`${uid}-bh`} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor="white" stopOpacity="0.14" />
+            <stop offset="25%" stopColor="white" stopOpacity="0.04" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </linearGradient>
+
+          {/* ── Outer bottom-edge stroke for 3D depth ── */}
+          <linearGradient id={`${uid}-es`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="black" stopOpacity="0" />
+            <stop offset="70%" stopColor="black" stopOpacity="0.06" />
+            <stop offset="100%" stopColor="black" stopOpacity="0.18" />
+          </linearGradient>
+
+          {/* ── Soft colored glow behind the badge ── */}
+          <filter id={`${uid}-gl`} x="-35%" y="-25%" width="170%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="10" />
+          </filter>
+
+          {/* ── Crisp drop shadow below the badge ── */}
+          <filter id={`${uid}-ds`} x="-15%" y="-10%" width="130%" height="135%">
             <feDropShadow
               dx="0"
-              dy="2"
-              stdDeviation="2"
-              floodColor={STICKER_SHADOW}
-              floodOpacity="0.16"
+              dy="4"
+              stdDeviation="6"
+              floodColor={colors.shadow}
+              floodOpacity="0.8"
             />
           </filter>
         </defs>
 
-        {isCircle && (
-          <g>
-            {/* Pale die-cut halo with the single subtle drop shadow */}
-            <circle
-              cx="100"
-              cy="100"
-              r={CIRCLE.haloRadius}
-              fill={HALO}
-              filter={`url(#${uid}-ds)`}
-            />
-            {/* Ink body */}
-            <circle cx="100" cy="100" r={CIRCLE.bodyRadius} fill={duotone.ink} />
-            {/* Cream pinstripe inside the rim */}
-            <circle
-              cx="100"
-              cy="100"
-              r={CIRCLE.pinstripeRadius}
-              fill="none"
-              stroke={duotone.cream}
+        <g transform="translate(0, 6)">
+          {/* Layer 0: Soft colored glow behind the badge */}
+          <Shape
+            shape={shape}
+            variant="outer"
+            fill={colors.mid}
+            filter={`url(#${uid}-gl)`}
+            opacity={0.35}
+          />
+
+          {/* Layer 1: Outer body with drop shadow */}
+          <Shape
+            shape={shape}
+            variant="outer"
+            fill={`url(#${uid}-og)`}
+            filter={`url(#${uid}-ds)`}
+          />
+
+          {/* Layer 2: Outer dark bottom-edge stroke for 3D extrusion */}
+          <Shape
+            shape={shape}
+            variant="outer"
+            fill="none"
+            stroke={`url(#${uid}-es)`}
+            strokeWidth={1.5}
+          />
+
+          {/* Layer 3: Sheen highlight on outer shape */}
+          <Shape shape={shape} variant="outer" fill={`url(#${uid}-sh)`} />
+
+          {/* Layer 4: Inner dish with radial gradient */}
+          <Shape shape={shape} variant="inner" fill={`url(#${uid}-ig)`} />
+
+          {/* Layer 5: Inner top shadow (concavity) */}
+          <Shape shape={shape} variant="inner" fill={`url(#${uid}-is)`} />
+
+          {/* Layer 6: Inner bottom rim highlight */}
+          <Shape shape={shape} variant="inner" fill={`url(#${uid}-bh)`} />
+
+          {/* Layer 7: Icon */}
+          {IconComponent && (
+            <IconComponent
+              x={62}
+              y={62}
+              width={76}
+              height={76}
+              stroke={colors.icon}
               strokeWidth={1.5}
-              opacity={0.55}
+              fill={colors.icon}
+              fillOpacity={0.2}
             />
-            {/* Accent ring around the inner disc */}
-            <circle
-              cx="100"
-              cy="100"
-              r={CIRCLE.ringRadius}
-              fill="none"
-              stroke={duotone.accent}
-              strokeWidth={2.5}
-            />
-            {/* Cream inner disc */}
-            <circle cx="100" cy="100" r={CIRCLE.discRadius} fill={duotone.cream} />
-            {IconComponent && (
-              <StickerIcon
-                icon={IconComponent}
-                iconKey={config.iconName}
-                fit={CIRCLE_ICON_FIT}
-                duotone={duotone}
-              />
-            )}
-            {topText && (
-              <text
-                fontSize={fitFontSize(topText, 13, ARC_LENGTH.circleTop)}
-                fontWeight={700}
-                letterSpacing={LETTER_SPACING}
-                fill={duotone.cream}
-              >
-                <textPath
-                  href={`#${uid}-arc-top`}
-                  startOffset="50%"
-                  textAnchor="middle"
-                >
-                  {topText}
-                </textPath>
-              </text>
-            )}
-            {bottomText && (
-              <text
-                fontSize={fitFontSize(bottomText, 13, ARC_LENGTH.circleBottom)}
-                fontWeight={700}
-                letterSpacing={LETTER_SPACING}
-                fill={duotone.cream}
-              >
-                <textPath
-                  href={`#${uid}-arc-bottom`}
-                  startOffset="50%"
-                  textAnchor="middle"
-                >
-                  {bottomText}
-                </textPath>
-              </text>
-            )}
-            {CIRCLE.dots.map((dot) => (
-              <circle
-                key={`${dot.cx}-${dot.cy}`}
-                cx={dot.cx}
-                cy={dot.cy}
-                r={3}
-                fill={duotone.accent}
-              />
-            ))}
-          </g>
-        )}
-
-        {isArch && (
-          <g>
-            {/* Pale die-cut halo with the single subtle drop shadow */}
-            <path d={ARCH.haloPath} fill={HALO} filter={`url(#${uid}-ds)`} />
-            {/* Cream body with thick ink outline */}
-            <path
-              d={ARCH.bodyPath}
-              fill={duotone.cream}
-              stroke={duotone.ink}
-              strokeWidth={5}
-              strokeLinejoin="round"
-            />
-            {/* Accent pinline */}
-            <path
-              d={ARCH.pinlinePath}
-              fill="none"
-              stroke={duotone.accent}
-              strokeWidth={2}
-            />
-            {/* Radiating ink dash marks above the icon */}
-            <g stroke={duotone.ink} strokeWidth={3} strokeLinecap="round">
-              {ARCH.rays.map((ray) => (
-                <line key={`${ray.x1}-${ray.y1}`} {...ray} />
-              ))}
-            </g>
-            {IconComponent && (
-              <StickerIcon
-                icon={IconComponent}
-                iconKey={config.iconName}
-                fit={ARCH_ICON_FIT}
-                duotone={duotone}
-              />
-            )}
-            {topText && (
-              <text
-                fontSize={fitFontSize(topText, 11.5, ARC_LENGTH.archTop)}
-                fontWeight={700}
-                letterSpacing={LETTER_SPACING}
-                fill={duotone.ink}
-              >
-                <textPath
-                  href={`#${uid}-arc-top`}
-                  startOffset="50%"
-                  textAnchor="middle"
-                >
-                  {topText}
-                </textPath>
-              </text>
-            )}
-            {bottomText && (
-              <text
-                x={100}
-                y={ARCH.captionY}
-                fontSize={fitFontSize(bottomText, 9, 118)}
-                fontWeight={700}
-                letterSpacing={LETTER_SPACING}
-                fill={duotone.ink}
-                textAnchor="middle"
-              >
-                {bottomText}
-              </text>
-            )}
-          </g>
-        )}
-
-        {isStar && (
-          <g>
-            {/* Pale die-cut halo with the single subtle drop shadow */}
-            <path d={STAR.haloPath} fill={HALO} filter={`url(#${uid}-ds)`} />
-            {/* Cream body with thick ink outline and rounded points */}
-            <path
-              d={STAR.bodyPath}
-              fill={duotone.cream}
-              stroke={duotone.ink}
-              strokeWidth={5}
-              strokeLinejoin="round"
-            />
-            {/* Accent keyline inset from the silhouette */}
-            <path
-              d={STAR.pinlinePath}
-              fill="none"
-              stroke={duotone.accent}
-              strokeWidth={2}
-            />
-            {/* Thin accent ring framing the icon */}
-            <circle
-              cx={100}
-              cy={100}
-              r={STAR.ringRadius}
-              fill="none"
-              stroke={duotone.accent}
-              strokeWidth={2}
-            />
-            {IconComponent && (
-              <StickerIcon
-                icon={IconComponent}
-                iconKey={config.iconName}
-                fit={STAR_ICON_FIT}
-                duotone={duotone}
-              />
-            )}
-            {topText && (
-              <text
-                fontSize={fitFontSize(topText, 10.5, ARC_LENGTH.starTop)}
-                fontWeight={700}
-                letterSpacing={LETTER_SPACING}
-                fill={duotone.ink}
-              >
-                <textPath
-                  href={`#${uid}-arc-top`}
-                  startOffset="50%"
-                  textAnchor="middle"
-                >
-                  {topText}
-                </textPath>
-              </text>
-            )}
-            {bottomText && (
-              <text
-                x={100}
-                y={STAR.captionY}
-                fontSize={fitFontSize(bottomText, 8, 64)}
-                fontWeight={700}
-                letterSpacing={2}
-                fill={duotone.ink}
-                textAnchor="middle"
-                // The lower star region is narrow and fitFontSize floors at
-                // 7, so long captions are compressed to the track instead
-                // of spilling over the star's edges.
-                textLength={
-                  bottomText.length *
-                    (GLYPH_WIDTH_RATIO * fitFontSize(bottomText, 8, 64) + 2) >
-                  62
-                    ? 62
-                    : undefined
-                }
-                lengthAdjust="spacingAndGlyphs"
-              >
-                {bottomText}
-              </text>
-            )}
-          </g>
-        )}
-
-        {isRosette && (
-          <g>
-            {/* Halo follows the combined circle-plus-ribbon silhouette */}
-            <g filter={`url(#${uid}-ds)`}>
-              <circle
-                cx={ROSETTE.cx}
-                cy={ROSETTE.cy}
-                r={ROSETTE.haloRadius}
-                fill={HALO}
-              />
-              {bottomText &&
-                ROSETTE.ribbon.haloPaths.map((d) => (
-                  <path key={d} d={d} fill={HALO} />
-                ))}
-            </g>
-            {/* Notched ribbon wings tucked behind the circle */}
-            {bottomText && (
-              <>
-                {ROSETTE.ribbon.wingPaths.map((d) => (
-                  <path
-                    key={d}
-                    d={d}
-                    fill={duotone.accent}
-                    stroke={duotone.ink}
-                    strokeWidth={3}
-                    strokeLinejoin="round"
-                  />
-                ))}
-                {ROSETTE.ribbon.foldPaths.map((d) => (
-                  <path key={d} d={d} fill={darkenHex(duotone.ink, 0.35)} />
-                ))}
-              </>
-            )}
-            {/* Ink body */}
-            <circle
-              cx={ROSETTE.cx}
-              cy={ROSETTE.cy}
-              r={ROSETTE.bodyRadius}
-              fill={duotone.ink}
-            />
-            {/* Cream pinstripe inside the rim */}
-            <circle
-              cx={ROSETTE.cx}
-              cy={ROSETTE.cy}
-              r={ROSETTE.pinstripeRadius}
-              fill="none"
-              stroke={duotone.cream}
-              strokeWidth={1.5}
-              opacity={0.55}
-            />
-            {/* Accent ring around the inner disc */}
-            <circle
-              cx={ROSETTE.cx}
-              cy={ROSETTE.cy}
-              r={ROSETTE.ringRadius}
-              fill="none"
-              stroke={duotone.accent}
-              strokeWidth={2.5}
-            />
-            {/* Cream inner disc */}
-            <circle
-              cx={ROSETTE.cx}
-              cy={ROSETTE.cy}
-              r={ROSETTE.discRadius}
-              fill={duotone.cream}
-            />
-            {IconComponent && (
-              <StickerIcon
-                icon={IconComponent}
-                iconKey={config.iconName}
-                fit={ROSETTE_ICON_FIT}
-                duotone={duotone}
-              />
-            )}
-            {topText && (
-              <text
-                fontSize={fitFontSize(topText, 10.5, ARC_LENGTH.rosetteTop)}
-                fontWeight={700}
-                letterSpacing={LETTER_SPACING}
-                fill={duotone.cream}
-              >
-                <textPath
-                  href={`#${uid}-arc-top`}
-                  startOffset="50%"
-                  textAnchor="middle"
-                >
-                  {topText}
-                </textPath>
-              </text>
-            )}
-            {ROSETTE.dots.map((dot) => (
-              <circle
-                key={`${dot.cx}-${dot.cy}`}
-                cx={dot.cx}
-                cy={dot.cy}
-                r={2.6}
-                fill={duotone.accent}
-              />
-            ))}
-            {/* Sagging front band carrying the bottom text */}
-            {bottomText && (
-              <>
-                <path d={ROSETTE.ribbon.bandPath} fill={duotone.ink} />
-                <text
-                  x={100}
-                  y={ROSETTE.ribbon.textY}
-                  fontSize={fitFontSize(
-                    bottomText,
-                    9,
-                    ROSETTE.ribbon.textTrack,
-                  )}
-                  fontWeight={700}
-                  letterSpacing={2}
-                  fill={duotone.cream}
-                  textAnchor="middle"
-                >
-                  {bottomText}
-                </text>
-              </>
-            )}
-          </g>
-        )}
+          )}
+        </g>
       </svg>
     );
   },
