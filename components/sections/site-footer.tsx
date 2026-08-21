@@ -50,7 +50,15 @@ export function SiteFooter() {
               href="https://github.com/Novigem/badge-generator"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="GitHub repository (opens in a new tab)"
+              className="hover:text-foreground rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Source code
+            </a>
+            <a
+              href="https://github.com/Novigem"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Novigem on GitHub (opens in a new tab)"
               className="inline-flex items-center gap-1 rounded-full outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Github className="h-4 w-4" />
