@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ExternalLink, Linkedin } from "lucide-react";
+import { ArrowRight, ExternalLink, Github, Linkedin } from "lucide-react";
 import { XIcon } from "@/components/icons/x-icon";
 
 export function SiteFooter() {
@@ -45,6 +45,16 @@ export function SiteFooter() {
               className="hover:text-foreground rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               novigem.com
+            </a>
+            <a
+              href="https://github.com/Novigem/badge-generator"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub repository (opens in a new tab)"
+              className="inline-flex items-center gap-1 rounded-full outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Github className="h-4 w-4" />
+              <ExternalLink className="h-3 w-3" />
             </a>
             <a
               href="https://www.linkedin.com/company/novigem/"
